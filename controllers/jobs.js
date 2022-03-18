@@ -1,21 +1,67 @@
+const Job = require('../models/Job')
+const { StatusCodes } = require('http-status-codes')
+const { BadRequestError, NotFoundError } = require('../errors')
+
 const getAllJobs = async (req, res) => {
-    res.send('Get All Jobs')
+    const jobs = await Job.find({ createdBy: req.user.userId }).sort('createdAt')
+    res.status(StatusCodes.OK).json({ jobs, count: jobs.length })
 }
 
 const getJob = async (req, res) => {
-    res.send('Get Job')
+    const {
+        user: { userId },        // accessing req.user and assigning its userId to userId
+        params: { id: jobId }    // accessing req.params and assigning its id to jobId
+    } = req
+    const job = await Job.findOne({
+        _id: jobId, createdBy: userId
+    })
+    if (!job) {
+        throw new NotFoundError(`No job with id ${jobId}`)
+    }
+    res.status(StatusCodes.OK).json({ job })
 }
 
 const createJob = async (req, res) => {
-    res.send('Create a Job')
+    console.log(req.body)
+    req.body.createdBy = req.user.userId
+    console.log(req.user.userId)
+    const job = await Job.create(req.body)
+    res.status(StatusCodes.CREATED).json({ job })
 }
 
 const updateJob = async (req, res) => {
-    res.send('Update a Job')
+    const {
+        body: { company, position },  // checking what user sent in
+        user: { userId },
+        params: { id: jobId }
+    } = req
+    if (company === '' || position === '') {
+        throw new BadRequestError('Company ot Position fields cannot be blank')
+    }
+    const job = await Job.findByIdAndUpdate(
+        { _id: jobId, createdBy: userId },
+        req.body,
+        { new: true, runValidators: true }
+    )
+    if (!job) {
+        throw new NotFoundError(`No job with id ${jobId}`)
+    }
+    res.status(StatusCodes.OK).json({ job })
 }
 
 const deleteJob = async (req, res) => {
-    res.send('Delete a Job')
+    const {
+        user: { userId },
+        params: { id: jobId }
+    } = req
+    const job = await Job.findByIdAndRemove({
+        _id: jobId,
+        createdBy: userId
+    })
+    if (!job) {
+        throw new NotFoundError(`No job iwth id ${jobId}`)
+    }
+    res.status(StatusCodes.OK).send()
 }
 
 module.exports = {

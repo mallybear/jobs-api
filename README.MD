@@ -67,3 +67,17 @@ Swagger UI
       required: true
       description: the job id
 ```
+
+Postman Testing
+
+Use Bearer Token
+
+In Login User, click on Test tab and insert the following code:
+
+  const jsonData = pm.response.json()
+  pm.globals.set("accessToken", jsonData.token)
+
+In Get All Jobs, deativate Authorization in Headers and add Bearer Token to Authorization Tab
+
+
+
